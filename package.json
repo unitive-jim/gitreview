@@ -1,0 +1,35 @@
+{
+  "name": "gitreview",
+  "version": "1.0.0",
+  "description": "Review topic branch commits by files changed",
+  "bin": "./bin/gitreview",
+  "preferGlobal": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "git",
+    "review",
+    "topic",
+    "branch",
+    "commits"
+  ],
+  "dependencies": {
+    "bluebird": "3.3.4",
+    "chalk": "^1.1.3",
+    "commander": "2.9.0",
+    "debug": "2.2.0",
+    "lodash": "4.13.1"
+  },
+  "author": "Jim Lloyd <jim@unitive.works>",
+  "license": "ISC",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unitive-jim/gitreview.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unitive-jim/gitreview/issues"
+  },
+  "homepage": "https://github.com/unitive-jim/gitreview#readme"
+}
