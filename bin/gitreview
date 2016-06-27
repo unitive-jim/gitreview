@@ -15,6 +15,7 @@ program
   .usage('[options]')
   .option('-b, --branch [commitish]', 'The commitish the topic branch was created from [master]', 'master')
   .option('-a, --abbrev [digits]', 'Abbreviate commit hashes to the number of digits', '8')
+  .option('-f, --by-file', 'Also output summary by file of files with multiple commits')
   .parse(process.argv);
 
 function doGitReview() {
@@ -61,15 +62,17 @@ function analyze(lines) {
     }
   });
 
-  console.log();
-  const files = _.sortBy(_.keys(index));
-  _.each(files, (file) => {
-    const commits = index[file];
-    if (commits.length > 1) {
-      console.log(chalk.bold(file));
-      _.each(commits, (commit) => console.log(INDENT + commit));
-    }
-  });
+  if (program.byFile) {
+    console.log();
+    const files = _.sortBy(_.keys(index));
+    _.each(files, (file) => {
+      const commits = index[file];
+      if (commits.length > 1) {
+        console.log(chalk.bold(file));
+        _.each(commits, (commit) => console.log(INDENT + commit));
+      }
+    });
+  }
 }
 
 doGitReview()
