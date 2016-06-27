@@ -1,6 +1,6 @@
 {
   "name": "gitreview",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Review topic branch commits by files changed",
   "bin": "./bin/gitreview",
   "preferGlobal": true,
