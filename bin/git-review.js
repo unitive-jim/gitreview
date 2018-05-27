@@ -10,14 +10,6 @@ const util = require('util');
 
 const dlog = debug('gitreview:main');
 
-program
-  .description('Review the current topic branch by files changed per commit')
-  .usage('[options]')
-  .option('-b, --branch [commitish]', 'The commitish the topic branch was created from [master]', 'master')
-  .option('-a, --abbrev [digits]', 'Abbreviate commit hashes to the number of digits', '8')
-  .option('-f, --by-file', 'Also output summary by file of files with multiple commits')
-  .parse(process.argv);
-
 function forward({out, err}) {
   if (!_.isEmpty(out)) {
     process.stdout.write(out);
@@ -26,6 +18,45 @@ function forward({out, err}) {
     process.stderr.write(chalk.red(err));
   }
 }
+
+async function distanceTo(committish) {
+  try {
+    const command = `git cherry --abbrev ${committish} HEAD`;
+    const {out, err} = await exec(command);
+    const distance = out.trim().split('\n').length;
+    dlog('Computed distance:', distance);
+    return distance === 0 ? Number.POSITIVE_INFINITY : distance;
+  } catch (e) {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+// This function makes a best guess as to the nearest "epic" branch that
+// the current branch likely was branched from.
+function nearestEpic() {
+  dlog('nearestEpic');
+  const epics = ['master', 'develop', 'origin/master', 'origin/develop']; // TODO: consider adding others
+  return P.reduce(epics, (best, committish) => {
+    dlog('best:', best, 'committish:', committish);
+    return distanceTo(committish)
+    .then(d => {
+      dlog(`${committish}: ${d}`);
+      return d < best[1] ? [committish, d] : best;
+    });
+  }, [null, Number.POSITIVE_INFINITY])
+  .then(best => best[0]);
+}
+
+async function parseArgs() {
+  const parent = await nearestEpic();
+  program
+    .description('Review the current topic branch by files changed per commit')
+    .usage('[options]')
+    .option('-b, --branch [committish]', `The committish the topic branch was created from [${parent}]`, parent)
+    .option('-f, --by-file', 'Also output summary by file of files with multiple commits')
+    .parse(process.argv);
+}
+
 async function exec(command) {
   dlog(`exec command "${command}"`);
   const execP = util.promisify(child_process.exec);
@@ -37,8 +68,7 @@ async function exec(command) {
 
 async function doGitReview() {
   const refbranch = program.branch;
-  const abbrev = program.abbrev;
-  const command = `git log --oneline --reverse --name-only --abbrev=${abbrev} ${refbranch}..HEAD`;
+  const command = `git log --oneline --reverse --name-only --abbrev --decorate=short ${refbranch}~1..HEAD`;
   const {out, err} = await exec(command);
   forward({err});
   return out.split('\n');
@@ -49,7 +79,7 @@ const INDENT = '    ';
 function analyze(lines) {
   const index = {};
 
-  const s = `^([0-9a-f]{${program.abbrev}})\\s+(.*)$`;
+  const s = `^([0-9a-f]+)\\s+(.*)$`;
   const r = new RegExp(s);
 
   let commit = null;
@@ -58,7 +88,7 @@ function analyze(lines) {
     if (m) {
       commit = m[1];
       const title = m[2];
-      console.log(chalk.bold(`${commit}  ${title}`));
+      console.log(chalk.bold.blue(`${commit}  ${title}`));
     } else {
       console.log(INDENT + line);
       if (!index[line]) {
@@ -82,5 +112,10 @@ function analyze(lines) {
   }
 }
 
-doGitReview()
-  .then((lines) => analyze(lines));
+async function main() {
+  await parseArgs();
+  const lines = await doGitReview()
+  analyze(lines);
+}
+
+main();
