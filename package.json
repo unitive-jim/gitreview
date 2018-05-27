@@ -21,7 +21,8 @@
     "chalk": "2.4.1",
     "commander": "2.15.1",
     "debug": "3.1.0",
-    "lodash": "4.17.10"
+    "lodash": "4.17.10",
+    "package-json-utils": "^1.1.1"
   },
   "author": "Jim Lloyd <jim@unitive.works>",
   "license": "ISC",

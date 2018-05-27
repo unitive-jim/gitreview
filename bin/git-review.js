@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const child_process = require('child_process');
 const debug = require('debug');
 const P = require('bluebird');
+const package = require('package-json-utils');
 const program = require('commander');
 const util = require('util');
 
@@ -51,6 +52,7 @@ async function parseArgs() {
   const parent = await nearestEpic();
   program
     .description('Review the current topic branch by files changed per commit')
+    .version(package.getVersion())
     .usage('[options]')
     .option('-b, --branch [committish]', `The committish the topic branch was created from [${parent}]`, parent)
     .option('-f, --by-file', 'Also output summary by file of files with multiple commits')
