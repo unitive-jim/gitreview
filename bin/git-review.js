@@ -2,10 +2,11 @@
 
 const _ = require('lodash');
 const chalk = require('chalk');
+const child_process = require('child_process');
 const debug = require('debug');
 const P = require('bluebird');
 const program = require('commander');
-const child_process = require('child_process');
+const util = require('util');
 
 const dlog = debug('gitreview:main');
 
@@ -17,23 +18,30 @@ program
   .option('-f, --by-file', 'Also output summary by file of files with multiple commits')
   .parse(process.argv);
 
-function doGitReview() {
+function forward({out, err}) {
+  if (!_.isEmpty(out)) {
+    process.stdout.write(out);
+  }
+  if (!_.isEmpty(err)) {
+    process.stderr.write(chalk.red(err));
+  }
+}
+async function exec(command) {
+  dlog(`exec command "${command}"`);
+  const execP = util.promisify(child_process.exec);
+  const {stdout, stderr} = await execP(command);
+  dlog('exec stdout:', stdout);
+  dlog('exec stderr:', stderr);
+  return {out: stdout, err: stderr};
+}
+
+async function doGitReview() {
   const refbranch = program.branch;
   const abbrev = program.abbrev;
   const command = `git log --oneline --reverse --name-only --abbrev=${abbrev} ${refbranch}..HEAD`;
-  dlog(command);
-  let lines = [];
-  return new P((resolve) => {
-    const p = child_process.exec(command);
-    p.stdout.on('data', (data) => {
-      const partial = _.filter(data.toString().split('\n'), (l) => !_.isEmpty(l));
-      lines = lines.concat(partial);
-    });
-    p.stderr.on('data', (data) => {
-      console.error(chalk.red(data.toString()));
-    });
-    p.on('close', () => resolve(lines));
-  });
+  const {out, err} = await exec(command);
+  forward({err});
+  return out.split('\n');
 }
 
 const INDENT = '    ';
