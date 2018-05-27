@@ -2,7 +2,7 @@
   "name": "gitreview",
   "version": "1.0.3",
   "description": "Review topic branch commits by files changed",
-  "bin": "./bin/gitreview",
+  "bin": {"git-review": "./bin/git-review.js"},
   "preferGlobal": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
